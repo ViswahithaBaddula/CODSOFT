@@ -1,0 +1,113 @@
+import java.util.Scanner;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class QuizApp {
+    static class Question {
+        String questionText;
+        String[] options;
+        int correctAnswer;
+
+        Question(String questionText, String[] options, int correctAnswer) {
+            this.questionText = questionText;
+            this.options = options;
+            this.correctAnswer = correctAnswer;
+        }
+    }
+
+    private static Question[] questions;
+    private static int currentQuestionIndex = 0;
+    private static int score = 0;
+    private static Timer timer;
+    private static boolean isTimeUp = false;
+
+    public static void main(String[] args) {
+        initializeQuestions();
+        Scanner scanner = new Scanner(System.in);
+
+        while (currentQuestionIndex < questions.length) {
+            isTimeUp = false;
+            displayQuestionWithTimer(questions[currentQuestionIndex]);
+            String answer = getUserAnswer(scanner);
+            timer.cancel();  // Stop the timer if the user answers
+
+            if (!isTimeUp) {
+                checkAnswer(answer);
+            }
+
+            currentQuestionIndex++;
+        }
+
+        displayResults();
+        scanner.close();
+    }
+
+    private static void initializeQuestions() {
+        questions = new Question[]{
+                new Question("What is the capital of France?", new String[]{"1) Paris", "2) London", "3) Berlin", "4) Madrid"}, 1),
+                new Question("What is the largest planet in our solar system?", new String[]{"1) Earth", "2) Mars", "3) Jupiter", "4) Saturn"}, 3),
+                new Question("Who wrote 'To Kill a Mockingbird'?", new String[]{"1) Harper Lee", "2) J.K. Rowling", "3) Mark Twain", "4) Ernest Hemingway"}, 1),
+                // Add more questions as needed
+        };
+    }
+
+    private static void displayQuestionWithTimer(Question question) {
+        TimerTask task = new TimerTask() {
+            int seconds = 15;
+
+            public void run() {
+                System.out.print("\r" + question.questionText + " (Time left: " + seconds + " seconds)   ");
+                if (seconds == 0) {
+                    System.out.println("\nTime is up!");
+                    isTimeUp = true;
+                    timer.cancel();
+                }
+                seconds--;
+            }
+        };
+
+        timer = new Timer();
+        System.out.println(question.questionText);
+        for (String option : question.options) {
+            System.out.println(option);
+        }
+        System.out.print("\nSelect your answer (1, 2, 3, or 4): ");
+        timer.scheduleAtFixedRate(task, 0, 1000);  // Start the timer
+    }
+
+    private static String getUserAnswer(Scanner scanner) {
+        String answer = "";
+        while (answer.isEmpty() && !isTimeUp) {
+            if (scanner.hasNextLine()) {
+                answer = scanner.nextLine().trim();
+            }
+        }
+        return answer;
+    }
+
+    private static void checkAnswer(String answer) {
+        try {
+            int selectedOption = Integer.parseInt(answer);
+            if (selectedOption >= 1 && selectedOption <= 4) {
+                if (selectedOption == questions[currentQuestionIndex].correctAnswer) {
+                    score++;
+                    System.out.println("Correct!");
+                } else {
+                    System.out.println("Incorrect. The correct answer is: " + questions[currentQuestionIndex].options[questions[currentQuestionIndex].correctAnswer - 1]);
+                }
+            }
+        } catch (NumberFormatException e) {
+            // Handle invalid input, do nothing
+        }
+    }
+
+    private static void displayResults() {
+        System.out.println("\nQuiz Over!");
+        System.out.println("Your final score is: " + score + " out of " + questions.length);
+        System.out.println("Summary:");
+        for (int i = 0; i < questions.length; i++) {
+            System.out.println((i + 1) + ". " + questions[i].questionText);
+            System.out.println("Correct Answer: " + questions[i].options[questions[i].correctAnswer - 1]);
+        }
+    }
+}
